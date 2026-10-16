@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { use } from "react";
 import { ChatView } from "@/components/chat";
-import { RoleGate } from "@/components/ui";
+import { ObjectPicture, RoleGate } from "@/components/ui";
 import { getObject } from "@/lib/objects";
 import { LOG_SECTIONS, SECTION_TEXT } from "@/lib/schema";
 import { childrenOf, findInvestigation } from "@/lib/store";
@@ -22,7 +22,7 @@ export default function Page({ params }: { params: Promise<{ sid: string; oid: s
             <Link href="/parent" style={{ color: "var(--paper)" }}>← Back to {child.name}&apos;s progress</Link>
             <div className="grid cols-2">
               <section className="card">
-                <span className="eyebrow">{obj.code}</span>
+                <span className="row"><ObjectPicture obj={obj} size="thumb" /><span className="eyebrow">{obj.code}</span></span>
                 <h1 style={{ fontSize: 28 }}>{child.name}&apos;s conversation</h1>
                 <p className="small muted">Read-only. Questions that ask what the object is are turned down, and count toward the 7.</p>
                 <div className="chat"><ChatView messages={inv.messages} obj={obj} /></div>

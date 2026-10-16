@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { NotesThread } from "@/components/notes";
-import { Dots, RoleGate } from "@/components/ui";
+import { Dots, ObjectPicture, RoleGate } from "@/components/ui";
 import { logFeedback, questionsUsed } from "@/lib/insights";
 import { OBJECTS, getObject } from "@/lib/objects";
 import { MAX_QUESTIONS } from "@/lib/schema";
@@ -24,6 +24,7 @@ function ObjectRow({ user, objectId, due }: { user: User; objectId: string; due?
   const s = status(inv);
   return (
     <div className="tile spread">
+      <ObjectPicture obj={obj} size="thumb" />
       <div className="stack" style={{ gap: 4, flex: "1 1 260px" }}>
         <div className="row">
           <strong style={{ fontFamily: "var(--serif)", fontSize: 21 }}>{obj.code}</strong>

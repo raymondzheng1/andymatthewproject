@@ -21,7 +21,15 @@ Copy `.env.example` to `.env.local`.
 
 | Variable | Needed? | What it does |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Optional | The guide rephrases sources in plain language, and teaching ideas are written for your question. Without it, the guide answers straight from the source passages and teaching ideas come from built-in lesson templates. |
+| `ANTHROPIC_API_KEY` | Yes, for AI answers | The guide's replies (including turned-down questions) and teaching ideas are written by Claude (`claude-opus-5-5`). Without a key, the app still works but quotes the source passages directly and uses built-in lesson templates, and every reply says so. |
+
+### Turning AI on in Vercel
+
+1. Project → **Settings → Environment Variables** → add `ANTHROPIC_API_KEY` (Production, and Preview if you use it).
+2. **Redeploy.** New variables only reach a deployment made after they were added (Deployments → ⋯ → Redeploy).
+3. Open `https://<your-site>/api/status?check=1`. You should see `"aiConfigured": true` and `"check": {"ok": true}`. If not, `detail` says why (missing key, rejected key, model not available, out of credit).
+
+Each answer in the app also shows "Written by the AI guide" or "Quoted from the sources (AI unavailable)", and the investigation page shows the reason when AI is off.
 
 ## Accounts
 
@@ -44,5 +52,5 @@ Copy `.env.example` to `.env.local`.
 - **Data is saved in the browser only** (`lib/store.ts`). There is no server or database yet. Accounts exist only on the device they were made on, and a teacher, student and parent must use the same browser to see each other's work. Swapping `lib/store.ts` for a real backend is the next step.
 - Because everything runs in the browser, the hidden object identities are in the page code. A student who opens developer tools could find them. This goes away once there is a server.
 - The three objects in `lib/objects.ts` are sample teaching material written for this app, not real excavation records. Teachers can't add their own objects yet.
-- No object photos yet (placeholders).
+- Object pictures are drawn illustrations (`public/objects/`), not photographs.
 - "Help me connect the dots" for hard sources, and the walkthrough video, are placeholders.

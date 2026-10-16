@@ -66,6 +66,11 @@ function GuideBubble({ m, obj, student, msgKey }: { m: GuideMessage; obj: Object
         </div>
       )}
       <Dictionary entries={m.dictionary} student={student} msgKey={msgKey} />
+      {m.via && (
+        <span className="small muted" style={{ fontSize: 12 }}>
+          {m.via === "ai" ? "Written by the AI guide from the sources" : "Quoted from the sources (AI unavailable)"}
+        </span>
+      )}
     </div>
   );
 }

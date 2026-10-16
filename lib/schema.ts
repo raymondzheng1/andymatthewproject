@@ -58,6 +58,10 @@ export const ChatMessage = z.discriminatedUnion("from", [
     sourceId: z.string().optional(),
     contribution: z.string().optional(),
     dictionary: z.array(DictionaryEntry),
+    /** "ai": written by the language model. "sources": quoted straight from the passage (fallback). */
+    via: z.enum(["ai", "sources"]).optional(),
+    /** Why the AI wasn't used, when via is "sources". */
+    aiError: z.string().optional(),
   }),
 ]);
 export type ChatMessage = z.infer<typeof ChatMessage>;

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480" role="img" aria-label="Object A-014">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0" stop-color="#ece6da"/>
+      <stop offset="1" stop-color="#bfb4a3"/>
+    </radialGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b98a52"/>
+      <stop offset="0.35" stop-color="#8d6234"/>
+      <stop offset="0.75" stop-color="#5d3f22"/>
+      <stop offset="1" stop-color="#3e2a17"/>
+    </linearGradient>
+    <filter id="patina" x="0" y="0" width="1" height="1">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035 0.08" numOctaves="3" seed="7"/>
+      <feColorMatrix values="0 0 0 0 0.36  0 0 0 0 0.62  0 0 0 0 0.52  0 0 0 2.4 -1.05"/>
+      <feComposite in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="pits"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="2"/><feColorMatrix values="0 0 0 0 0.12 0 0 0 0 0.09 0 0 0 0 0.05 0 0 0 0.6 0"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="9"/></filter>
+    <clipPath id="shape">
+      <path d="M92 214 C 86 206 92 196 104 194 L 196 196 L 470 214 C 520 218 548 224 562 232 C 566 236 566 244 562 248 C 548 256 520 262 470 266 L 196 284 L 104 286 C 92 284 86 274 92 266 C 84 254 84 226 92 214 Z"/>
+    </clipPath>
+  </defs>
+  <rect width="640" height="480" fill="url(#bg)"/>
+  <ellipse cx="330" cy="312" rx="250" ry="24" fill="#4a3a2c" opacity="0.32" filter="url(#soft)"/>
+  <g clip-path="url(#shape)">
+    <rect x="80" y="190" width="490" height="100" fill="url(#metal)"/>
+    <rect x="80" y="190" width="490" height="100" fill="#000" filter="url(#pits)"/>
+    <rect x="80" y="190" width="490" height="100" fill="#000" filter="url(#patina)"/>
+    <!-- highlight along the top face -->
+    <path d="M110 204 L 470 222 C 510 225 540 230 556 236" fill="none" stroke="#e6c38e" stroke-width="3" opacity="0.45"/>
+    <!-- fine scratches running lengthwise near the narrow end -->
+    <g stroke="#e9d2a8" stroke-width="1" opacity="0.6">
+      <path d="M470 232 L 556 238"/><path d="M478 240 L 558 241"/><path d="M474 248 L 552 246"/>
+    </g>
+  </g>
+  <!-- wide end: flattened, spread lip -->
+  <path d="M92 214 C 80 222 78 258 92 266" fill="none" stroke="#3a2614" stroke-width="5"/>
+  <path d="M96 210 C 104 206 104 292 96 290" fill="none" stroke="#c9a06a" stroke-width="2" opacity="0.5"/>
+  <!-- narrow end: flattened, slightly rounded edge -->
+  <path d="M560 232 C 568 238 568 244 560 250" fill="none" stroke="#f1d7a6" stroke-width="3"/>
+  <!-- scale bar: 2 cm per block, 12 cm total width ≈ object length -->
+  <g transform="translate(60 420)" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3b2e27">
+    <rect x="0" y="0" width="80" height="10" fill="#2b2420"/><rect x="80" y="0" width="80" height="10" fill="#fff" stroke="#2b2420"/>
+    <rect x="160" y="0" width="80" height="10" fill="#2b2420"/><rect x="240" y="0" width="80" height="10" fill="#fff" stroke="#2b2420"/>
+    <rect x="320" y="0" width="80" height="10" fill="#2b2420"/><rect x="400" y="0" width="80" height="10" fill="#fff" stroke="#2b2420"/>
+    <text x="0" y="30">0</text><text x="455" y="30">12 cm</text>
+  </g>
+  <text x="580" y="80" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3b2e27" opacity="0.8">A-014 · illustration</text>
+</svg>

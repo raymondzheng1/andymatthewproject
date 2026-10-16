@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480" role="img" aria-label="Object P-001">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0" stop-color="#ece6da"/>
+      <stop offset="1" stop-color="#bfb4a3"/>
+    </radialGradient>
+    <radialGradient id="clay" cx="38%" cy="32%" r="80%">
+      <stop offset="0" stop-color="#d08a5f"/>
+      <stop offset="0.55" stop-color="#a8613d"/>
+      <stop offset="1" stop-color="#6e3b22"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a4c2e"/>
+      <stop offset="1" stop-color="#4e2915"/>
+    </linearGradient>
+    <radialGradient id="hole" cx="50%" cy="40%" r="60%">
+      <stop offset="0" stop-color="#2a1a12"/>
+      <stop offset="0.7" stop-color="#3b2418"/>
+      <stop offset="1" stop-color="#7a4a30"/>
+    </radialGradient>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 0.25 0 0 0 0 0.14 0 0 0 0 0.08 0 0 0 0.55 0"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>
+  <rect width="640" height="480" fill="url(#bg)"/>
+  <ellipse cx="322" cy="318" rx="170" ry="38" fill="#4a3a2c" opacity="0.35" filter="url(#soft)"/>
+  <!-- disc edge (thickness) -->
+  <ellipse cx="320" cy="262" rx="160" ry="96" fill="url(#rim)"/>
+  <!-- disc face -->
+  <ellipse cx="320" cy="240" rx="160" ry="96" fill="url(#clay)"/>
+  <ellipse cx="320" cy="240" rx="160" ry="96" fill="#000" filter="url(#grain)"/>
+  <!-- chips and wear on the rim -->
+  <path d="M190 205 q14 -10 30 -6 q-10 12 -28 14z" fill="#7c4329" opacity="0.7"/>
+  <path d="M430 300 q18 -2 26 -14 q4 14 -22 20z" fill="#5e321d" opacity="0.6"/>
+  <!-- central hole, inside polished -->
+  <ellipse cx="320" cy="240" rx="27" ry="17" fill="url(#hole)"/>
+  <ellipse cx="320" cy="244" rx="27" ry="13" fill="none" stroke="#c99a7a" stroke-width="2" opacity="0.55"/>
+  <path d="M300 232 q20 -8 40 0" fill="none" stroke="#f0c9a8" stroke-width="2" opacity="0.5"/>
+  <!-- scale bar: 4 cm -->
+  <g transform="translate(60 420)" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3b2e27">
+    <rect x="0" y="0" width="80" height="10" fill="#2b2420"/><rect x="80" y="0" width="80" height="10" fill="#fff" stroke="#2b2420"/>
+    <rect x="160" y="0" width="80" height="10" fill="#2b2420"/><rect x="240" y="0" width="80" height="10" fill="#fff" stroke="#2b2420"/>
+    <text x="0" y="30">0</text><text x="300" y="30">4 cm</text>
+  </g>
+  <text x="580" y="440" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3b2e27" opacity="0.8">P-001 · illustration</text>
+</svg>

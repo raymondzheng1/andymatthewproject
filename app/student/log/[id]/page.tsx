@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { use, useState } from "react";
-import { RoleGate } from "@/components/ui";
+import { ObjectPicture, RoleGate } from "@/components/ui";
 import { checkOriginality, logFeedback, questionsLeft, shouldFlag } from "@/lib/insights";
 import { findPassage, getObject, type ObjectCase } from "@/lib/objects";
 import { LOG_SECTIONS, SECTION_TEXT } from "@/lib/schema";
@@ -70,7 +70,7 @@ function LogEditor({ user, obj, inv }: { user: User; obj: ObjectCase; inv: Inves
         <section className="card">
           <div className="spread">
             <div className="stack" style={{ gap: 2 }}>
-              <span className="eyebrow">{obj.code}</span>
+              <span className="row"><ObjectPicture obj={obj} size="thumb" /><span className="eyebrow">{obj.code}</span></span>
               <h1 style={{ fontSize: 32 }}>Interpretation Log</h1>
             </div>
             <span className="small muted">{locked ? "Submitted" : saved ? "Saved" : "Unsaved changes"}</span>

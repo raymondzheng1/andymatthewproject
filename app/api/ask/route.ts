@@ -2,6 +2,9 @@ import { z } from "zod";
 import { guideReply } from "@/lib/ai";
 import { getObject } from "@/lib/objects";
 
+// Model replies can take several seconds; the hosting default can cut them off.
+export const maxDuration = 60;
+
 const Body = z.object({
   objectId: z.string().max(40),
   question: z.string().trim().min(1).max(500),

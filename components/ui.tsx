@@ -147,6 +147,26 @@ export function Strength({ value }: { value: "strong" | "developing" | "missing"
   return <span className={`pill ${cls}`}>{text}</span>;
 }
 
+/** The object's picture. Opens full size in a new tab so details (wear, marks) can be studied. */
+export function ObjectPicture({ obj, size = "large" }: { obj: { id: string; code: string; brief: string }; size?: "large" | "thumb" }) {
+  const src = `/objects/${obj.id}.svg`;
+  const img = (
+    <img
+      src={src}
+      alt={`Illustration of ${obj.code}: ${obj.brief}`}
+      width={size === "thumb" ? 96 : 640}
+      height={size === "thumb" ? 72 : 480}
+      style={{ width: "100%", height: "auto", borderRadius: size === "thumb" ? 8 : 10, display: "block", background: "#d8cfbd" }}
+    />
+  );
+  if (size === "thumb") return <span style={{ width: 96, flexShrink: 0, display: "block" }}>{img}</span>;
+  return (
+    <a href={src} target="_blank" rel="noreferrer" title="Open the picture full size">
+      {img}
+    </a>
+  );
+}
+
 export function fmtDate(iso: string): string {
   return new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 }

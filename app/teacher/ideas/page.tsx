@@ -3,12 +3,16 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { RoleGate } from "@/components/ui";
+import { z } from "zod";
 import { LessonPlanSchema, offlinePlan, type LessonPlan } from "@/lib/ideas";
+
+const PlanReply = LessonPlanSchema.extend({ via: z.enum(["ai", "sources"]), aiError: z.string().optional() });
+type Plan = LessonPlan & { via: "ai" | "sources"; aiError?: string };
 import { analyseClass } from "@/lib/insights";
 import type { User } from "@/lib/schema";
 import { classesForTeacher, getDb } from "@/lib/store";
 
-type Exchange = { question: string; plan: LessonPlan | null };
+type Exchange = { question: string; plan: Plan | null };
 
 const SUGGESTED = ["How can I help them with the time period?", "How do I teach fact vs inference in 15 minutes?", "How can I get them writing in their own words?"];
 
@@ -27,17 +31,17 @@ function Ideas({ teacher }: { teacher: User }) {
     setBusy(true);
     setQuestion("");
     setThread((t) => [...t, { question: q, plan: null }]);
-    let plan: LessonPlan;
+    let plan: Plan;
     try {
       const res = await fetch("/api/ideas", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ className: cls.name, analysis, question: q }),
       });
-      const parsed = LessonPlanSchema.safeParse(await res.json());
-      plan = parsed.success ? parsed.data : offlinePlan(analysis, q);
+      const parsed = PlanReply.safeParse(await res.json());
+      plan = parsed.success ? parsed.data : { ...offlinePlan(analysis, q), via: "sources", aiError: `Unexpected reply from the server (${res.status}).` };
     } catch {
-      plan = offlinePlan(analysis, q);
+      plan = { ...offlinePlan(analysis, q), via: "sources", aiError: "Couldn't reach the server." };
     }
     setThread((t) => t.map((x, i) => (i === t.length - 1 ? { ...x, plan } : x)));
     setBusy(false);
@@ -94,6 +98,9 @@ function Ideas({ teacher }: { teacher: User }) {
                           </li>
                         ))}
                       </ol>
+                      <span className="small muted" style={{ fontSize: 12 }}>
+                        {x.plan.via === "ai" ? "Written by AI for your class" : `Built-in lesson template (AI unavailable: ${x.plan.aiError ?? "unknown reason"})`}
+                      </span>
                     </>
                   )}
                 </div>

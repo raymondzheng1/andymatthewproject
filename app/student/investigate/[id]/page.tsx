@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { use, useEffect, useRef, useState } from "react";
 import { ChatView } from "@/components/chat";
-import { Chip, Dots, RoleGate } from "@/components/ui";
+import { Chip, Dots, ObjectPicture, RoleGate } from "@/components/ui";
 import { offlineAnswer } from "@/lib/guide";
 import { questionsLeft, questionsUsed } from "@/lib/insights";
 import { findPassage, getObject, type ObjectCase } from "@/lib/objects";
@@ -31,7 +31,7 @@ async function ask(obj: ObjectCase, inv: Investigation, question: string): Promi
   } catch {
     // Fall through to answering from the sources on this device.
   }
-  return offlineAnswer(question, obj, seen, new Date().toISOString());
+  return { ...offlineAnswer(question, obj, seen, new Date().toISOString()), via: "sources", aiError: "Couldn't reach the server." };
 }
 
 function Investigate({ user, obj }: { user: User; obj: ObjectCase }) {
@@ -76,6 +76,8 @@ function Investigate({ user, obj }: { user: User; obj: ObjectCase }) {
     }
   }
   const words = wordsFor(user.id);
+  const lastGuide = [...inv.messages].reverse().find((m) => m.from === "guide");
+  const aiOff = lastGuide?.from === "guide" && lastGuide.via === "sources" ? lastGuide.aiError : undefined;
   const logStarted = LOG_SECTIONS.filter((s) => inv.log[s].trim().length > 0);
 
   return (
@@ -90,10 +92,8 @@ function Investigate({ user, obj }: { user: User; obj: ObjectCase }) {
       </div>
       <div className="grid cols-investigate">
         <aside className="card">
-          <div className="tile" style={{ background: "#cbc1b1", minHeight: 140, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>
-            Object photo
-          </div>
-          <p className="small muted">What is it? That&apos;s for you to work out.</p>
+          <ObjectPicture obj={obj} />
+          <p className="small muted">What is it? That&apos;s for you to work out. Click the picture to see it full size.</p>
           <div className="stack" style={{ gap: 4 }}>
             <span className="eyebrow">What you can see</span>
             <p>{obj.brief}</p>
@@ -115,6 +115,11 @@ function Investigate({ user, obj }: { user: User; obj: ObjectCase }) {
             <h2 style={{ fontSize: 22 }}>Ask the evidence</h2>
             <span className="small muted">Every answer is labeled and sourced</span>
           </div>
+          {aiOff && (
+            <p className="banner small" role="status" style={{ margin: "12px 16px 0", borderRadius: 10 }}>
+              AI answers are off right now, so replies are quoted straight from the sources. Reason: {aiOff}
+            </p>
+          )}
           <div className="chat" style={{ borderRadius: 0 }} aria-live="polite">
             <ChatView messages={inv.messages} obj={obj} student={user} />
             {pending && (

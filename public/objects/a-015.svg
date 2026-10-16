@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480" role="img" aria-label="Object A-015">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0" stop-color="#ece6da"/>
+      <stop offset="1" stop-color="#bfb4a3"/>
+    </radialGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d9a77a"/>
+      <stop offset="0.5" stop-color="#b37a4f"/>
+      <stop offset="1" stop-color="#7a4b2c"/>
+    </linearGradient>
+    <radialGradient id="bowl" cx="50%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#6b4127"/>
+      <stop offset="1" stop-color="#9a6743"/>
+    </radialGradient>
+    <radialGradient id="soot" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#140c08" stop-opacity="0.95"/>
+      <stop offset="0.6" stop-color="#2a1a12" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#2a1a12" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="2" seed="5"/><feColorMatrix values="0 0 0 0 0.3 0 0 0 0 0.18 0 0 0 0 0.1 0 0 0 0.5 0"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>
+  <rect width="640" height="480" fill="url(#bg)"/>
+  <ellipse cx="320" cy="330" rx="210" ry="30" fill="#4a3a2c" opacity="0.33" filter="url(#soft)"/>
+  <!-- body seen from the side, slightly above -->
+  <path id="b" d="M150 250 C 150 300 210 330 290 330 C 350 330 400 318 440 300 L 500 276 C 516 270 520 256 508 250 L 470 244 C 450 214 380 196 300 196 C 210 196 150 214 150 250 Z" fill="url(#body)"/>
+  <path d="M150 250 C 150 300 210 330 290 330 C 350 330 400 318 440 300 L 500 276 C 516 270 520 256 508 250 L 470 244 C 450 214 380 196 300 196 C 210 196 150 214 150 250 Z" fill="#000" filter="url(#grain)"/>
+  <!-- open bowl -->
+  <ellipse cx="300" cy="232" rx="126" ry="34" fill="url(#bowl)"/>
+  <ellipse cx="300" cy="232" rx="126" ry="34" fill="none" stroke="#e2b88f" stroke-width="5"/>
+  <!-- spout channel and sooted tip -->
+  <path d="M410 236 L 500 254" stroke="#6b4127" stroke-width="10" stroke-linecap="round"/>
+  <ellipse cx="500" cy="258" rx="34" ry="20" fill="url(#soot)"/>
+  <ellipse cx="508" cy="256" rx="10" ry="6" fill="#1a110c"/>
+  <!-- scale bar: 1 cm = 41 px, so the 370 px body is 9 cm -->
+  <g transform="translate(60 420)" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3b2e27">
+    <rect x="0" y="0" width="41" height="10" fill="#2b2420"/><rect x="41" y="0" width="41" height="10" fill="#fff" stroke="#2b2420"/>
+    <rect x="82" y="0" width="41" height="10" fill="#2b2420"/><rect x="123" y="0" width="41" height="10" fill="#fff" stroke="#2b2420"/>
+    <text x="0" y="30">0</text><text x="140" y="30">4 cm</text>
+  </g>
+  <text x="580" y="80" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3b2e27" opacity="0.8">A-015 · illustration</text>
+</svg>

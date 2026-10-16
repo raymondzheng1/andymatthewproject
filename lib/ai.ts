@@ -2,7 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import { checkReply, isIdentityQuestion, blockedReply, offlineAnswer } from "./guide";
+import { blockedReply, checkReply, isIdentityQuestion, offlineAnswer } from "./guide";
 import type { ObjectCase } from "./objects";
 import { findPassage } from "./objects";
 import type { GuideMessage } from "./schema";
@@ -10,12 +10,28 @@ import { DictionaryEntry } from "./schema";
 import type { ClassAnalysis } from "./insights";
 import { offlinePlan, type LessonPlan, LessonPlanSchema } from "./ideas";
 
-const MODEL = "claude-opus-5-5";
+export const MODEL = "claude-opus-5-5";
+const FALLBACK_BETA = "server-side-fallback-2026-07-01";
 
-/** Null when no API key is set; the app then answers from sources directly. */
-function client(): Anthropic | null {
+export const NO_KEY = "No API key is set on the server (ANTHROPIC_API_KEY).";
+
+/** Null when no API key is set. Kept short so a reply fits inside the hosting time limit. */
+export function makeClient(): Anthropic | null {
   if (!process.env.ANTHROPIC_API_KEY) return null;
-  return new Anthropic();
+  return new Anthropic({ timeout: 45_000, maxRetries: 1 });
+}
+
+/** A short, safe description of why a model call failed (never includes the key). */
+export function describeError(error: unknown): string {
+  if (error instanceof Anthropic.AuthenticationError) return "The API key was rejected (401). Check ANTHROPIC_API_KEY.";
+  if (error instanceof Anthropic.PermissionDeniedError) return "The API key isn't allowed to use this model (403).";
+  if (error instanceof Anthropic.NotFoundError) return `The model ${MODEL} wasn't found for this key (404).`;
+  if (error instanceof Anthropic.RateLimitError) return "Rate limited or out of credit (429).";
+  if (error instanceof Anthropic.APIConnectionTimeoutError) return "The AI took too long to answer.";
+  if (error instanceof Anthropic.APIConnectionError) return "Couldn't reach the AI service.";
+  if (error instanceof Anthropic.BadRequestError) return `The AI service rejected the request (400): ${error.message.slice(0, 200)}`;
+  if (error instanceof Anthropic.APIError) return `AI service error ${error.status ?? ""}`.trim();
+  return "The AI request failed.";
 }
 
 /* ------------------------------------------------------------------ investigation guide */
@@ -29,7 +45,7 @@ const GuideOutput = z.object({
 
 const GUIDE_SYSTEM = `You are the guide in a history classroom app. A student is investigating an ancient object and is trying to work out for themselves what it is.
 
-Your job is to help them reason from evidence. You never tell them what the object is or what it was used for, not directly, not as a hint, and not by confirming or ruling out a guess ("is it a tool or a weapon?"). If a question asks for the identity or function, reply with kind "blocked": say briefly that this part is theirs to work out, and point them to the passage that would help them decide.
+Your job is to help them reason from evidence. You never tell them what the object is or what it was used for, not directly, not as a hint, and not by confirming or ruling out a guess ("is it a tool or a weapon?"). If a question asks for the identity or function, reply with kind "blocked": say warmly, in one sentence, that this part is theirs to work out, then point them to the one passage most likely to help them decide, set passageId to that passage's id, and ask them one question that gets them thinking about what that passage shows.
 
 Answer only from the passages in <sources>. Each passage has an id. When a passage answers the question, reply with kind "answer", set passageId to that passage's id, and explain what it says in two or three plain sentences a 13-year-old can follow. Do not add facts that are not in the passage. If the passage is an interpretation, say so. If no passage answers the question, reply with kind "redirect", set passageId to null, and suggest the kind of question the sources can answer.
 
@@ -46,13 +62,21 @@ function sourcesBlock(obj: ObjectCase): string {
 
 export type Turn = { question: string; reply: string };
 
-export async function guideReply(obj: ObjectCase, question: string, history: Turn[], seen: string[]): Promise<GuideMessage> {
-  const at = new Date().toISOString();
-  // Identity questions are refused without a model call, so the rule can't be argued around.
-  if (isIdentityQuestion(question)) return blockedReply(obj, at);
+function fromSources(question: string, obj: ObjectCase, seen: string[], at: string, aiError: string): GuideMessage {
+  return { ...offlineAnswer(question, obj, seen, at), via: "sources", aiError };
+}
 
-  const anthropic = client();
-  if (!anthropic) return offlineAnswer(question, obj, seen, at);
+export async function guideReply(
+  obj: ObjectCase,
+  question: string,
+  history: Turn[],
+  seen: string[],
+  anthropic: Anthropic | null = makeClient(),
+): Promise<GuideMessage> {
+  const at = new Date().toISOString();
+  // Identity questions are decided by code, not by the model, so the rule can't be argued around.
+  const identity = isIdentityQuestion(question);
+  if (!anthropic) return fromSources(question, obj, seen, at, NO_KEY);
 
   try {
     const messages: Anthropic.Beta.BetaMessageParam[] = [];
@@ -60,12 +84,17 @@ export async function guideReply(obj: ObjectCase, question: string, history: Tur
       messages.push({ role: "user", content: t.question });
       messages.push({ role: "assistant", content: t.reply });
     }
-    messages.push({ role: "user", content: `<question>${question}</question>` });
+    messages.push({
+      role: "user",
+      content: identity
+        ? `<question>${question}</question>\n<note>This question asks for the object's identity or function. Reply with kind "blocked".</note>`
+        : `<question>${question}</question>`,
+    });
 
     const response = await anthropic.beta.messages.parse({
       model: MODEL,
       max_tokens: 4000,
-      betas: ["server-side-fallback-2026-07-01"],
+      betas: [FALLBACK_BETA],
       fallbacks: "default",
       output_config: { effort: "low", format: betaZodOutputFormat(GuideOutput) },
       cache_control: { type: "ephemeral" },
@@ -73,33 +102,52 @@ export async function guideReply(obj: ObjectCase, question: string, history: Tur
       messages,
     });
     const out = response.parsed_output;
-    if (response.stop_reason === "refusal" || !out) return offlineAnswer(question, obj, seen, at);
+    if (response.stop_reason === "refusal") return fromSources(question, obj, seen, at, "The AI declined to answer this question.");
+    if (!out) return fromSources(question, obj, seen, at, `The AI reply couldn't be read (stop reason: ${response.stop_reason}).`);
 
-    if (out.kind === "blocked") return blockedReply(obj, at);
-    if (out.kind === "redirect" || !out.passageId) {
-      return checkReply({ from: "guide", at, kind: "redirect", text: out.text, dictionary: out.dictionary.slice(0, 2) }, obj, at);
-    }
-    const found = findPassage(obj, out.passageId);
-    if (!found) return offlineAnswer(question, obj, seen, at);
-    // The evidence label and contribution come from the passage, never from the model.
-    return checkReply(
-      {
+    const dictionary = out.dictionary.slice(0, 2);
+    const passage = out.passageId ? findPassage(obj, out.passageId) : undefined;
+
+    if (identity || out.kind === "blocked") {
+      const fallback = blockedReply(obj, at);
+      const hint = passage ?? (fallback.sourceId ? findPassage(obj, fallback.sourceId) : undefined);
+      const reply: GuideMessage = {
         from: "guide",
         at,
-        kind: "answer",
+        kind: "blocked",
         text: out.text,
-        label: found.passage.label,
-        sourceId: found.passage.id,
-        contribution: found.passage.contribution,
-        dictionary: out.dictionary.slice(0, 2),
-      },
-      obj,
+        sourceId: hint?.passage.id,
+        contribution: hint?.passage.contribution,
+        dictionary,
+        via: "ai",
+      };
+      // If the model's wording would give the answer away, use the fixed wording instead.
+      const checked = checkReply(reply, obj, at);
+      return checked.text === reply.text ? reply : { ...fallback, via: "ai" };
+    }
+
+    if (out.kind === "redirect" || !passage) {
+      const reply: GuideMessage = { from: "guide", at, kind: "redirect", text: out.text, dictionary, via: "ai" };
+      return { ...checkReply(reply, obj, at), via: "ai" };
+    }
+
+    // The evidence label and contribution come from the passage, never from the model.
+    const reply: GuideMessage = {
+      from: "guide",
       at,
-    );
+      kind: "answer",
+      text: out.text,
+      label: passage.passage.label,
+      sourceId: passage.passage.id,
+      contribution: passage.passage.contribution,
+      dictionary,
+      via: "ai",
+    };
+    return { ...checkReply(reply, obj, at), via: "ai" };
   } catch (error) {
-    if (error instanceof Anthropic.APIError) console.error(`guide: API error ${error.status}`);
-    else console.error("guide: request failed");
-    return offlineAnswer(question, obj, seen, at);
+    const reason = describeError(error);
+    console.error(`guide: ${reason}`);
+    return fromSources(question, obj, seen, at, reason);
   }
 }
 
@@ -122,24 +170,48 @@ ${list(a.needsWork)}
 </class>`;
 }
 
-export async function teachingPlan(className: string, analysis: ClassAnalysis, question: string): Promise<LessonPlan> {
-  const anthropic = client();
-  if (!anthropic) return offlinePlan(analysis, question);
+export type PlanResult = LessonPlan & { via: "ai" | "sources"; aiError?: string };
+
+export async function teachingPlan(
+  className: string,
+  analysis: ClassAnalysis,
+  question: string,
+  anthropic: Anthropic | null = makeClient(),
+): Promise<PlanResult> {
+  const fallback = (aiError: string): PlanResult => ({ ...offlinePlan(analysis, question), via: "sources", aiError });
+  if (!anthropic) return fallback(NO_KEY);
   try {
     const response = await anthropic.beta.messages.parse({
       model: MODEL,
       max_tokens: 8000,
-      betas: ["server-side-fallback-2026-07-01"],
+      betas: [FALLBACK_BETA],
       fallbacks: "default",
-      output_config: { effort: "medium", format: betaZodOutputFormat(LessonPlanSchema) },
+      output_config: { effort: "low", format: betaZodOutputFormat(LessonPlanSchema) },
       system: IDEAS_SYSTEM,
       messages: [{ role: "user", content: `${analysisBlock(className, analysis)}\n\n<question>${question}</question>` }],
     });
-    if (response.stop_reason === "refusal" || !response.parsed_output) return offlinePlan(analysis, question);
-    return response.parsed_output;
+    if (response.stop_reason === "refusal") return fallback("The AI declined to answer this question.");
+    if (!response.parsed_output) return fallback(`The AI reply couldn't be read (stop reason: ${response.stop_reason}).`);
+    return { ...response.parsed_output, via: "ai" };
   } catch (error) {
-    if (error instanceof Anthropic.APIError) console.error(`ideas: API error ${error.status}`);
-    else console.error("ideas: request failed");
-    return offlinePlan(analysis, question);
+    const reason = describeError(error);
+    console.error(`ideas: ${reason}`);
+    return fallback(reason);
+  }
+}
+
+/** A tiny live call, so you can check the key and model work after deploying. */
+export async function checkAi(anthropic: Anthropic | null = makeClient()): Promise<{ ok: boolean; detail: string }> {
+  if (!anthropic) return { ok: false, detail: NO_KEY };
+  try {
+    await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 200,
+      output_config: { effort: "low" },
+      messages: [{ role: "user", content: "Reply with the word OK." }],
+    });
+    return { ok: true, detail: `Connected to ${MODEL}.` };
+  } catch (error) {
+    return { ok: false, detail: describeError(error) };
   }
 }

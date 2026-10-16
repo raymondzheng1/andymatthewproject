@@ -4,7 +4,7 @@ import Link from "next/link";
 import { use, useState } from "react";
 import { ChatView } from "@/components/chat";
 import { Highlight } from "@/components/highlight";
-import { RoleGate } from "@/components/ui";
+import { ObjectPicture, RoleGate } from "@/components/ui";
 import { getObject, sourceTitle } from "@/lib/objects";
 import { LOG_SECTIONS, SECTION_TEXT } from "@/lib/schema";
 import type { Investigation, User } from "@/lib/schema";
@@ -28,10 +28,10 @@ function Review({ teacher, inv }: { teacher: User; inv: Investigation }) {
       <div className="grid cols-main-side">
         <section className="card">
           <div className="spread">
-            <div className="stack" style={{ gap: 2 }}>
+            <div className="row" style={{ alignItems: "flex-start" }}><ObjectPicture obj={obj} size="thumb" /><div className="stack" style={{ gap: 2 }}>
               <span className="eyebrow">{obj.code} · the answer is “{obj.identity}” (students never see this)</span>
               <h1 style={{ fontSize: 32 }}>{student?.name}</h1>
-            </div>
+            </div></div>
             {inv.log.flag && <span className="pill bad">Reasoning mirrors the chat ({Math.round(inv.log.flag.score * 100)}% of phrases)</span>}
           </div>
           {inv.log.flag && <p className="small muted">Highlighted passages match the guide&apos;s replies almost word for word.</p>}
