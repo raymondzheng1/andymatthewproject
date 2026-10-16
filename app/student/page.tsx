@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { NotesThread } from "@/components/notes";
 import { Dots, ObjectPicture, RoleGate } from "@/components/ui";
-import { logFeedback, questionsUsed } from "@/lib/insights";
+import { questionsUsed, ruleFeedback } from "@/lib/insights";
 import { OBJECTS, getObject } from "@/lib/objects";
 import { MAX_QUESTIONS } from "@/lib/schema";
 import type { Investigation, User } from "@/lib/schema";
@@ -58,7 +58,9 @@ export default function StudentHome() {
         const mine = investigationsFor(user.id);
         const submitted = mine.filter((i) => i.log.submittedAt).sort((a, b) => (a.log.submittedAt! < b.log.submittedAt! ? -1 : 1));
         const latest = submitted[submitted.length - 1];
-        const suggestions = latest ? logFeedback(latest.log, submitted.slice(0, -1).map((i) => i.log), 0).filter((f) => f.tone !== "better").slice(0, 3) : [];
+        // The feedback saved with the latest log (written by AI when available).
+        const latestFeedback = latest ? latest.log.feedback ?? ruleFeedback(latest.log, submitted.slice(0, -1).map((i) => i.log), 0) : undefined;
+        const suggestions = latestFeedback?.improve.slice(0, 3) ?? [];
         const reviews = mine.filter((i) => i.log.review?.feedback);
         const parents = parentsOf(user.id);
 
@@ -68,6 +70,14 @@ export default function StudentHome() {
               <section className="card">
                 <span className="eyebrow">Welcome back, {user.name}</span>
                 <h1 style={{ fontSize: 36 }}>Your investigations</h1>
+                {user.guest && (
+                  <div className="banner">
+                    <span style={{ flex: 1 }}>
+                      You&apos;re using a guest account. You can try every practice object. Guests can&apos;t join a class, and your work is deleted when you log out.
+                    </span>
+                    <Link className="btn small" href="/#signup">Create an account</Link>
+                  </div>
+                )}
                 {!done && (
                   <div className="banner">
                     <span style={{ flex: 1 }}>New here? The walkthrough shows you how to ask good questions.</span>
@@ -76,11 +86,11 @@ export default function StudentHome() {
                 )}
                 {assigned.length > 0 && <h2 style={{ fontSize: 22 }}>From your teacher</h2>}
                 {assigned.map((a) => <ObjectRow key={a.objectId} user={user} objectId={a.objectId} due={a.due} />)}
-                <h2 style={{ fontSize: 22 }}>{assigned.length ? "Explore more" : "Objects to investigate"}</h2>
-                {explore.map((o) => <ObjectRow key={o.id} user={user} objectId={o.id} />)}
-                <h2 style={{ fontSize: 22 }}>Practice</h2>
+                {!user.guest && <h2 style={{ fontSize: 22 }}>{assigned.length ? "Explore more" : "Objects to investigate"}</h2>}
+                {!user.guest && explore.map((o) => <ObjectRow key={o.id} user={user} objectId={o.id} />)}
+                <h2 style={{ fontSize: 22 }}>Practice objects</h2>
                 {practice.map((o) => <ObjectRow key={o.id} user={user} objectId={o.id} />)}
-                {classes.length === 0 && (
+                {classes.length === 0 && !user.guest && (
                   <p className="small muted">
                     Got a class code from a teacher? Add it on your <Link href="/student/account">account page</Link>.
                   </p>
@@ -92,10 +102,15 @@ export default function StudentHome() {
                   <h2 style={{ fontSize: 22 }}>Suggestions for next time</h2>
                   {suggestions.length ? (
                     <ul className="stack" style={{ margin: 0, paddingLeft: 18 }}>
-                      {suggestions.map((s) => <li key={s.text}>{s.text}</li>)}
+                      {suggestions.map((s) => <li key={s}>{s}</li>)}
                     </ul>
                   ) : (
-                    <p className="small muted">Submit an Interpretation Log to get suggestions.</p>
+                    <p className="small muted">Finish an Interpretation Log to get suggestions.</p>
+                  )}
+                  {latestFeedback && (
+                    <span className="small muted" style={{ fontSize: 12 }}>
+                      {latestFeedback.via === "ai" ? `Written by AI from your ${getObject(latest!.objectId)?.code} log` : "Automatic checklist (AI unavailable)"}
+                    </span>
                   )}
                 </div>
                 {reviews.length > 0 && (
@@ -109,7 +124,7 @@ export default function StudentHome() {
                     ))}
                   </div>
                 )}
-                <div className="card">
+                {!user.guest && <div className="card">
                   <h2 style={{ fontSize: 22 }}>Notes with {parents.length ? parents.map((p) => p.name).join(" & ") : "your parent"}</h2>
                   {parents.length ? (
                     <NotesThread student={user} me={user} />
@@ -118,7 +133,7 @@ export default function StudentHome() {
                       To share notes with a parent, give them your family link from your <Link href="/student/account">account page</Link>.
                     </p>
                   )}
-                </div>
+                </div>}
               </aside>
             </div>
           </main>

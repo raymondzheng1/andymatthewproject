@@ -33,6 +33,8 @@ export const User = z.object({
   loginCode: z.string().optional(),
   /** Students share this with a parent so the parent can link to them. */
   parentLinkCode: z.string().optional(),
+  /** A guest student: practice objects only, no classes, family links or notes. Deleted on log out. */
+  guest: z.boolean().optional(),
 });
 export type User = z.infer<typeof User>;
 
@@ -76,6 +78,16 @@ export const SECTION_TEXT: Record<LogSection, string> = {
   reasoning: "Reasoning",
 };
 
+/** Feedback on a student's Interpretation Log, written by AI or (as a fallback) by fixed rules. */
+export const ReasoningFeedback = z.object({
+  improve: z.array(z.string()),
+  compare: z.array(z.object({ tone: z.enum(["better", "same", "worse"]), text: z.string() })),
+  via: z.enum(["ai", "rules"]),
+  aiError: z.string().optional(),
+  at: z.string(),
+});
+export type ReasoningFeedback = z.infer<typeof ReasoningFeedback>;
+
 export const InterpretationLog = z.object({
   material: z.string(),
   location: z.string(),
@@ -88,6 +100,7 @@ export const InterpretationLog = z.object({
     reasoning: z.array(z.string()),
   }),
   submittedAt: z.string().optional(),
+  feedback: ReasoningFeedback.optional(),
   flag: z
     .object({ score: z.number(), matches: z.array(z.string()) })
     .optional(),

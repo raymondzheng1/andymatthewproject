@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { RoleGate } from "@/components/ui";
 import { AccountError, classesForStudent, joinClass, parentsOf } from "@/lib/store";
@@ -36,6 +37,17 @@ export default function Account() {
   return (
     <RoleGate role="student">
       {(user) => {
+        if (user.guest) {
+          return (
+            <main className="page">
+              <div className="card" style={{ maxWidth: 560 }}>
+                <h1 style={{ fontSize: 30 }}>Guest account</h1>
+                <p>Guest accounts can&apos;t join a class or link to a parent. Create a student account to do that. It only needs your first name.</p>
+                <Link className="btn" href="/#signup" style={{ alignSelf: "flex-start" }}>Create an account</Link>
+              </div>
+            </main>
+          );
+        }
         const link = typeof window !== "undefined" ? `${window.location.origin}/parent?link=${user.parentLinkCode}` : "";
         const parents = parentsOf(user.id);
         return (

@@ -184,7 +184,15 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   return (
     <RoleGate role="student">
       {(user) =>
-        obj ? (
+        obj && user.guest && !obj.practice ? (
+          <main className="page">
+            <div className="card" style={{ maxWidth: 560 }}>
+              <h1>Practice objects only</h1>
+              <p>Guest accounts can use the practice objects. Create a student account to investigate other objects or join a class.</p>
+              <Link className="btn" href="/student" style={{ alignSelf: "flex-start" }}>Back to practice objects</Link>
+            </div>
+          </main>
+        ) : obj ? (
           <Investigate user={user} obj={obj} />
         ) : (
           <main className="page"><div className="card"><h1>Object not found</h1><Link href="/student">Back</Link></div></main>

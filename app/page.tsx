@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Chip, TopBar, useApp } from "@/components/ui";
+import { GuestButton } from "@/components/guest";
 import { AccountError, currentUser, signUpStudent, signUpWithPassword } from "@/lib/store";
 import type { Role } from "@/lib/schema";
 
@@ -92,6 +93,7 @@ function SignUp() {
       <button className="btn" disabled={busy} style={{ minHeight: 50, fontSize: 16 }}>
         Create {role} account
       </button>
+      <GuestButton />
     </form>
   );
 }

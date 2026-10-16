@@ -21,7 +21,7 @@ Copy `.env.example` to `.env.local`.
 
 | Variable | Needed? | What it does |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Yes, for AI answers | The guide's replies (including turned-down questions) and teaching ideas are written by Claude (`claude-opus-5-5`). Without a key, the app still works but quotes the source passages directly and uses built-in lesson templates, and every reply says so. |
+| `ANTHROPIC_API_KEY` | Yes, for AI answers | The guide's replies (including turned-down questions), feedback on students' Interpretation Log reasoning, and teaching ideas are written by Claude (`claude-opus-5-5`). Without a key, the app still works but quotes the source passages directly and uses built-in lesson templates, and every reply says so. |
 
 ### Turning AI on in Vercel
 
@@ -38,6 +38,7 @@ Each answer in the app also shows "Written by the AI guide" or "Quoted from the 
 | Student | First name, plus an optional class code. Anyone can sign up without a class. | The login code they are shown at sign-up (e.g. `KILN-OCHRE-4821`). |
 | Teacher | Name, email, password | Email and password |
 | Parent | Name, email, password, then adds a child with the child's family link (`FAMILY-123456`) | Email and password |
+| Guest student | One click ("Try it as a guest") | Nothing to remember: guest work is deleted when the guest session ends. Guests can use every practice object, but can't join a class, be linked by a parent, send notes or open non-practice objects. |
 
 ## How the rules are enforced
 
@@ -51,6 +52,6 @@ Each answer in the app also shows "Written by the AI guide" or "Quoted from the 
 
 - **Data is saved in the browser only** (`lib/store.ts`). There is no server or database yet. Accounts exist only on the device they were made on, and a teacher, student and parent must use the same browser to see each other's work. Swapping `lib/store.ts` for a real backend is the next step.
 - Because everything runs in the browser, the hidden object identities are in the page code. A student who opens developer tools could find them. This goes away once there is a server.
-- The three objects in `lib/objects.ts` are sample teaching material written for this app, not real excavation records. Teachers can't add their own objects yet.
+- The objects in `lib/objects.ts` (three practice objects and two class objects) are sample teaching material written for this app, not real excavation records. Teachers can't add their own objects yet.
 - Object pictures are drawn illustrations (`public/objects/`), not photographs.
 - "Help me connect the dots" for hard sources, and the walkthrough video, are placeholders.

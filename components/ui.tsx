@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSyncExternalStore, type ReactNode } from "react";
-import { currentUser, getVersion, setSession, subscribe } from "@/lib/store";
+import { currentUser, getVersion, logOut, subscribe } from "@/lib/store";
 import type { EvidenceLabel, Role, User } from "@/lib/schema";
 import { LABEL_TEXT, MAX_QUESTIONS } from "@/lib/schema";
 
@@ -49,12 +49,12 @@ export function TopBar({ user }: { user: User | null }) {
         <Mark />
         <span>
           <span className="brand-name">Ancient Object Investigation</span>
-          {user && <span className="brand-role">{user.role}</span>}
+          {user && <span className="brand-role">{user.guest ? "guest student" : user.role}</span>}
         </span>
       </Link>
       <nav className="topbar-mid" aria-label="Main">
         {user &&
-          NAV[user.role].map((n) => (
+          (user.guest ? NAV.student.filter((n) => n.href !== "/student/account") : NAV[user.role]).map((n) => (
             <Link key={n.href} href={n.href} aria-current={path === n.href ? "page" : undefined}>
               {n.label}
             </Link>
@@ -66,11 +66,12 @@ export function TopBar({ user }: { user: User | null }) {
           <button
             className="btn dark small"
             onClick={() => {
-              setSession(null);
+              if (user.guest && !confirm("Log out of the guest account? Your guest work will be deleted.")) return;
+              logOut();
               router.push("/");
             }}
           >
-            Log out
+            {user.guest ? "End guest session" : "Log out"}
           </button>
         </div>
       ) : (

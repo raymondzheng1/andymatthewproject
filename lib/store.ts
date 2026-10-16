@@ -1,5 +1,6 @@
 import type { ChatMessage, ClassRoom, Db, Investigation, InterpretationLog, Note, Role, User } from "./schema";
 import { Db as DbSchema } from "./schema";
+import { getObject } from "./objects";
 
 /**
  * Every piece of app data lives in the browser (localStorage) for now. There
@@ -149,6 +150,36 @@ export function signUpStudent(name: string, classCode?: string): User {
   return user;
 }
 
+/**
+ * A guest student: no name, code or email. Guests can only use practice
+ * objects, can't join a class, link a parent or send notes, and everything
+ * they did is deleted when they log out.
+ */
+export function signInAsGuest(): User {
+  const user: User = { id: uid(), role: "student", name: "Guest", guest: true, createdAt: now() };
+  commit((d) => void d.users.push(user));
+  setSession(user.id);
+  return user;
+}
+
+/** Ends the session. A guest's account and work are deleted. */
+export function logOut(): void {
+  const user = currentUser();
+  if (user?.guest) {
+    commit((d) => {
+      d.users = d.users.filter((u) => u.id !== user.id);
+      d.investigations = d.investigations.filter((i) => i.studentId !== user.id);
+      d.words = d.words.filter((w) => w.studentId !== user.id);
+      d.walkthroughDone = d.walkthroughDone.filter((id) => id !== user.id);
+    });
+  }
+  setSession(null);
+}
+
+export function isGuest(userId: string): boolean {
+  return !!getUser(userId)?.guest;
+}
+
 export function logInStudent(code: string): User {
   const c = normaliseCode(code);
   const user = getDb().users.find((u) => u.role === "student" && u.loginCode === c);
@@ -193,6 +224,7 @@ export function createClass(teacherId: string, name: string): ClassRoom {
 }
 
 export function joinClass(studentId: string, code: string): ClassRoom {
+  if (isGuest(studentId)) throw new AccountError("Guest accounts can't join a class. Create a student account to join one.");
   const c = normaliseCode(code);
   const cls = getDb().classes.find((k) => k.code === c);
   if (!cls) throw new AccountError("No class uses that code.");
@@ -228,7 +260,13 @@ export function findInvestigation(studentId: string, objectId: string): Investig
   return getDb().investigations.find((i) => i.studentId === studentId && i.objectId === objectId);
 }
 
+/** Guests may only use practice objects. */
+export function canUseObject(studentId: string, objectId: string): boolean {
+  return !isGuest(studentId) || !!getObject(objectId)?.practice;
+}
+
 export function startInvestigation(studentId: string, objectId: string): Investigation {
+  if (!canUseObject(studentId, objectId)) throw new AccountError("Guest accounts can only use practice objects.");
   const existing = findInvestigation(studentId, objectId);
   if (existing) return existing;
   const inv: Investigation = { id: uid(), studentId, objectId, startedAt: now(), messages: [], log: emptyLog() };
@@ -264,7 +302,7 @@ export function linkChild(parentId: string, linkCodeOrUrl: string): User {
   const m = linkCodeOrUrl.match(/FAMILY-\d{6}/i);
   const code = m ? m[0].toUpperCase() : normaliseCode(linkCodeOrUrl);
   const child = getDb().users.find((u) => u.role === "student" && u.parentLinkCode === code);
-  if (!child) throw new AccountError("That family link doesn't match a student on this device.");
+  if (!child || child.guest) throw new AccountError("That family link doesn't match a student on this device.");
   commit((d) => {
     if (!d.parentLinks.some((l) => l.parentId === parentId && l.studentId === child.id)) d.parentLinks.push({ parentId, studentId: child.id });
   });
@@ -282,6 +320,7 @@ export function parentsOf(studentId: string): User[] {
 }
 
 export function addNote(studentId: string, authorId: string, text: string, shareWithTeacher: boolean): Note {
+  if (isGuest(studentId)) throw new AccountError("Guest accounts can't send or receive notes.");
   const note: Note = { id: uid(), studentId, authorId, text: text.trim(), at: now(), shareWithTeacher };
   commit((d) => void d.notes.push(note));
   return note;

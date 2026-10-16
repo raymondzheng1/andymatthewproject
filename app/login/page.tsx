@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TopBar } from "@/components/ui";
+import { GuestButton } from "@/components/guest";
 import { AccountError, logInStudent, logInWithPassword } from "@/lib/store";
 
 export default function Login() {
@@ -58,6 +59,7 @@ export default function Login() {
           )}
           {error && <p className="error" role="alert">{error}</p>}
           <button className="btn">Log in</button>
+          <GuestButton />
           <p className="small muted">
             New here? <Link href="/#signup">Create an account</Link>. Accounts are saved in this browser for now, so log in on the same device you signed up on.
           </p>

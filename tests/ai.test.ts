@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it } from "vitest";
-import { checkAi, guideReply, MODEL, NO_KEY, teachingPlan } from "@/lib/ai";
+import { checkAi, guideReply, MODEL, NO_KEY, reasoningFeedback, teachingPlan } from "@/lib/ai";
+import { emptyLog } from "@/lib/store";
 import { getObject } from "@/lib/objects";
 import type { ClassAnalysis } from "@/lib/insights";
 
@@ -96,5 +97,42 @@ describe("teaching ideas use the AI", () => {
     const plan = await teachingPlan("9B", analysis, "Help with dating?", client);
     expect(plan.via).toBe("sources");
     expect(plan.steps.length).toBeGreaterThan(0);
+  });
+});
+
+describe("reasoning feedback uses the AI", () => {
+  const log = {
+    ...emptyLog(),
+    material: "Copper with some tin, from the conservation report.",
+    reasoning: "It was hit at the wide end, so I think it was used on something hard.",
+    sources: { material: ["a14-conservation"], location: [], timePeriod: [], reasoning: [] },
+  };
+
+  it("sends the log, linked sources and earlier logs, and returns the AI's feedback", async () => {
+    const { client, sent } = fakeClient({
+      improve: ["Link the excavation record to your reasoning.", "Say how sure you are."],
+      compare: [{ tone: "better", text: "You linked a source for material this time." }],
+    });
+    const fb = await reasoningFeedback(obj, log, [{ objectCode: "Practice P-001", log: { ...emptyLog(), material: "Clay." } }], 3, client);
+    expect(fb).toMatchObject({ via: "ai", improve: ["Link the excavation record to your reasoning.", "Say how sure you are."] });
+    expect(fb.compare[0]).toMatchObject({ tone: "better" });
+    const user = JSON.stringify(sent[0]!.body.messages);
+    expect(user).toContain("Conservation report");
+    expect(user).toContain("Practice P-001");
+    expect(user).toContain("<questions_left>3</questions_left>");
+  });
+
+  it("drops feedback that would give the object away", async () => {
+    const { client } = fakeClient({ improve: ["Good, it really is a chisel!", "Add a date from the excavation record."], compare: [] });
+    const fb = await reasoningFeedback(obj, log, [], 3, client);
+    expect(fb.improve).toEqual(["Add a date from the excavation record."]);
+  });
+
+  it("falls back to the checklist and says why when AI fails", async () => {
+    const { client } = fakeClient({}, 401);
+    const fb = await reasoningFeedback(obj, log, [], 3, client);
+    expect(fb.via).toBe("rules");
+    expect(fb.aiError).toMatch(/401/);
+    expect(fb.improve.length).toBeGreaterThan(0);
   });
 });

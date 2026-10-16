@@ -1,4 +1,4 @@
-import type { ClassRoom, Investigation, InterpretationLog, LogSection } from "./schema";
+import type { ClassRoom, Investigation, InterpretationLog, LogSection, ReasoningFeedback } from "./schema";
 import { LOG_SECTIONS, MAX_QUESTIONS, SECTION_TEXT } from "./schema";
 
 /* ------------------------------------------------------------------ originality */
@@ -96,6 +96,18 @@ export function logFeedback(log: InterpretationLog, past: InterpretationLog[], q
     }
   }
   return out;
+}
+
+/** The fixed-rule checklist in the same shape as AI feedback, used when AI isn't available. */
+export function ruleFeedback(log: InterpretationLog, past: InterpretationLog[], questionsLeft: number, aiError?: string): ReasoningFeedback {
+  const items = logFeedback(log, past, questionsLeft);
+  return {
+    improve: items.filter((f) => f.tone === "improve").map((f) => f.text),
+    compare: items.filter((f) => f.tone !== "improve").map((f) => ({ tone: f.tone === "better" ? "better" : "same", text: f.text })),
+    via: "rules",
+    aiError,
+    at: new Date().toISOString(),
+  };
 }
 
 /* ------------------------------------------------------------------ class analysis */

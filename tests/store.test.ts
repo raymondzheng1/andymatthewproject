@@ -76,3 +76,44 @@ describe("questions and originality", () => {
     expect(a.needsWork.some((n) => n.title === "Own words")).toBe(true);
   });
 });
+
+describe("guest accounts", () => {
+  it("can use every practice object but nothing else", () => {
+    const g = store.signInAsGuest();
+    expect(g).toMatchObject({ role: "student", guest: true });
+    expect(g.loginCode).toBeUndefined();
+    expect(store.canUseObject(g.id, "p-001")).toBe(true);
+    expect(store.canUseObject(g.id, "p-002")).toBe(true);
+    expect(store.canUseObject(g.id, "p-003")).toBe(true);
+    expect(store.canUseObject(g.id, "a-014")).toBe(false);
+    expect(() => store.startInvestigation(g.id, "a-014")).toThrow(store.AccountError);
+    expect(store.startInvestigation(g.id, "p-002").objectId).toBe("p-002");
+  });
+
+  it("can't join a class, be linked by a parent or use notes", async () => {
+    const t = await store.signUpWithPassword("teacher", "T", "t2@x.com", "password1");
+    const cls = store.createClass(t.id, "9C");
+    const parent = await store.signUpWithPassword("parent", "P", "p2@x.com", "password1");
+    const g = store.signInAsGuest();
+    expect(() => store.joinClass(g.id, cls.code)).toThrow(store.AccountError);
+    expect(store.classesForStudent(g.id)).toEqual([]);
+    expect(g.parentLinkCode).toBeUndefined();
+    expect(() => store.addNote(g.id, parent.id, "hi", false)).toThrow(store.AccountError);
+    expect(() => store.addNote(g.id, g.id, "hi", false)).toThrow(store.AccountError);
+  });
+
+  it("deletes the guest and their work on log out, leaving other accounts alone", () => {
+    const s = store.signUpStudent("Real");
+    store.startInvestigation(s.id, "p-001");
+    const g = store.signInAsGuest();
+    store.startInvestigation(g.id, "p-001");
+    store.addWord(g.id, "patina", "old coating");
+    store.logOut();
+    const db = store.getDb();
+    expect(db.users.some((u) => u.id === g.id)).toBe(false);
+    expect(db.investigations.some((i) => i.studentId === g.id)).toBe(false);
+    expect(db.words.some((w) => w.studentId === g.id)).toBe(false);
+    expect(db.investigations.some((i) => i.studentId === s.id)).toBe(true);
+    expect(store.currentUser()).toBeNull();
+  });
+});

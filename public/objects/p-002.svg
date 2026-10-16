@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480" role="img" aria-label="Object P-002">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0" stop-color="#ece6da"/>
+      <stop offset="1" stop-color="#bfb4a3"/>
+    </radialGradient>
+    <linearGradient id="side" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8f7f6a"/>
+      <stop offset="1" stop-color="#5a4d3e"/>
+    </linearGradient>
+    <radialGradient id="top" cx="40%" cy="35%" r="80%">
+      <stop offset="0" stop-color="#c8b79c"/>
+      <stop offset="1" stop-color="#9c8a70"/>
+    </radialGradient>
+    <radialGradient id="dip" cx="50%" cy="45%" r="55%">
+      <stop offset="0" stop-color="#7d6d58"/>
+      <stop offset="0.75" stop-color="#a99779"/>
+      <stop offset="1" stop-color="#c2b193" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="grit"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="11"/><feColorMatrix values="0 0 0 0 0.2 0 0 0 0 0.16 0 0 0 0 0.11 0 0 0 0.75 0"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="12"/></filter>
+    <clipPath id="topclip"><path d="M100 236 C 96 196 170 168 320 166 C 470 168 548 194 544 236 C 540 278 470 300 320 302 C 170 300 104 278 100 236 Z"/></clipPath>
+  </defs>
+  <rect width="640" height="480" fill="url(#bg)"/>
+  <ellipse cx="324" cy="342" rx="250" ry="34" fill="#4a3a2c" opacity="0.35" filter="url(#soft)"/>
+  <!-- thick slab side -->
+  <path d="M100 236 L 104 290 C 112 332 180 350 320 352 C 466 350 534 330 540 290 L 544 236 C 540 278 470 300 320 302 C 170 300 104 278 100 236 Z" fill="url(#side)"/>
+  <path d="M100 236 L 104 290 C 112 332 180 350 320 352 C 466 350 534 330 540 290 L 544 236 C 540 278 470 300 320 302 C 170 300 104 278 100 236 Z" fill="#000" filter="url(#grit)"/>
+  <!-- rough top face -->
+  <g clip-path="url(#topclip)">
+    <rect x="90" y="160" width="460" height="150" fill="url(#top)"/>
+    <rect x="90" y="160" width="460" height="150" fill="#000" filter="url(#grit)"/>
+    <!-- smooth worn hollow, polished: covers the grit -->
+    <ellipse cx="320" cy="234" rx="170" ry="40" fill="url(#dip)"/>
+    <ellipse cx="320" cy="230" rx="150" ry="30" fill="#b9a789" opacity="0.55"/>
+    <!-- fine lengthwise scratches in the hollow -->
+    <g stroke="#e5d7bd" stroke-width="1" opacity="0.55" fill="none">
+      <path d="M190 228 C 260 222 380 222 450 228"/><path d="M200 238 C 270 232 370 232 440 238"/><path d="M215 246 C 280 242 360 242 425 246"/>
+    </g>
+  </g>
+  <!-- scale bar: 1 cm = 10.5 px, 444 px slab = 42 cm; bar shows 20 cm -->
+  <g transform="translate(60 420)" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3b2e27">
+    <rect x="0" y="0" width="52.5" height="10" fill="#2b2420"/><rect x="52.5" y="0" width="52.5" height="10" fill="#fff" stroke="#2b2420"/>
+    <rect x="105" y="0" width="52.5" height="10" fill="#2b2420"/><rect x="157.5" y="0" width="52.5" height="10" fill="#fff" stroke="#2b2420"/>
+    <text x="0" y="30">0</text><text x="182" y="30">20 cm</text>
+  </g>
+  <text x="580" y="80" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#3b2e27" opacity="0.8">P-002 · illustration</text>
+</svg>
