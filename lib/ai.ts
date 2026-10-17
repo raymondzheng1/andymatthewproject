@@ -10,6 +10,7 @@ import { DictionaryEntry, LOG_SECTIONS, SECTION_TEXT } from "./schema";
 import { ruleFeedback } from "./insights";
 import type { ClassAnalysis } from "./insights";
 import { offlinePlan, type LessonPlan, LessonPlanSchema } from "./ideas";
+import { findApiKey } from "./env";
 
 export const MODEL = "claude-opus-5-5";
 const FALLBACK_BETA = "server-side-fallback-2026-07-01";
@@ -18,8 +19,9 @@ export const NO_KEY = "No API key is set on the server (ANTHROPIC_API_KEY).";
 
 /** Null when no API key is set. Kept short so a reply fits inside the hosting time limit. */
 export function makeClient(): Anthropic | null {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
-  return new Anthropic({ timeout: 45_000, maxRetries: 1 });
+  const { key } = findApiKey();
+  if (!key) return null;
+  return new Anthropic({ apiKey: key, timeout: 45_000, maxRetries: 1 });
 }
 
 /** A short, safe description of why a model call failed (never includes the key). */
